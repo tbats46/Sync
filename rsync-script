@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Synchronization with echo filesystem - Implemented by Tom
+MASTER_DIR="/var/test-tb/"
+SLAVE_DIR="syncuser@echo.nuvana.io:/var/test-tb/"
+LOG_FILE="/var/log/rsync.log"
+
+# Function to log messages
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> $LOG_FILE
+}
+
+# Function to perform sync
+sync_directories() {
+    log_message "Starting sync from master to slave"
+    rsync -avzu -e "ssh -p 47722" --delete $MASTER_DIR $SLAVE_DIR
+    if [ $? -eq 0 ]; then
+        log_message "Sync from master to slave completed successfully"
+    else
+        log_message "Error during sync from master to slave: $?"
+    fi
+
+    log_message "Starting sync from slave to master"
+    rsync -avzu -e "ssh -p 47722" $SLAVE_DIR $MASTER_DIR
+    if [ $? -eq 0 ]; then
+        log_message "Sync from slave to master completed successfully"
+    else
+        log_message "Error during sync from slave to master: $?"
+    fi
+}
+
+# Monitor directory for changes
+log_message "Starting directory monitoring"
+inotifywait -m -r -e modify,create,attrib,delete $MASTER_DIR | while read path action file; do
+    log_message "Detected $action on $file in $path"
+    sync_directories
+done
