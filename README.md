@@ -1,4 +1,4 @@
-This script is a Bash script designed to synchronize two directories, referred to as the "master" and "slave" directories, using rsync over SSH. Here's a breakdown of its components:
+This script is a Bash/Python script designed to synchronize two directories, referred to as the "master" and "slave" directories, using rsync over SSH. Here's a breakdown of its components:
 
 1. Variables
 MASTER_DIR and SLAVE_DIR: Paths to the master and slave directories.
