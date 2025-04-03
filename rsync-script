@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Synchronization with echo filesystem - Implemented by Tom
-MASTER_DIR="/var/test-tb/"
-SLAVE_DIR="/var/test-tb/"
+# Synchronization with echo filesystem 
+MASTER_DIR="/var/dir/"
+SLAVE_DIR="/var/dir/"
 LOG_FILE="/var/log/rsync.log"
 IDENTITY_FILE="/home/syncuser/.ssh/id_ed25519"
 
@@ -14,7 +14,7 @@ log_message() {
 # Function to perform sync
 sync_directories() {
     log_message "Starting sync from master to slave"
-    rsync -avzur -e "ssh -i $IDENTITY_FILE -p 47722" --delete $MASTER_DIR syncuser@echo.nuvana.io:$SLAVE_DIR
+    rsync -avzur -e "ssh -i $IDENTITY_FILE -p <port>" --delete $MASTER_DIR syncuser@<hostname>:$SLAVE_DIR
     if [ $? -eq 0 ]; then
         log_message "Sync from master to slave completed successfully"
     else
@@ -22,7 +22,7 @@ sync_directories() {
     fi
 
     log_message "Starting sync from slave to master"
-    rsync -avzur -e "ssh -i $IDENTITY_FILE -p 47722" syncuser@echo.nuvana.io:$SLAVE_DIR $MASTER_DIR
+    rsync -avzur -e "ssh -i $IDENTITY_FILE -p <port>" syncuser@<hostname>:$SLAVE_DIR $MASTER_DIR
     if [ $? -eq 0 ]; then
         log_message "Sync from slave to master completed successfully"
     else
@@ -39,10 +39,10 @@ is_master_online() {
 # Function to get the latest file timestamp in a directory
 get_latest_timestamp() {
     log_message "Retrieving timestamp from slave directory"
-    local timestamp=$(ssh -t -i $IDENTITY_FILE -p 47722 syncuser@echo.nuvana.io "find $SLAVE_DIR -type f -printf '%T@\n' | sort -n | tail -1")
+    local timestamp=$(ssh -t -i $IDENTITY_FILE -p <port> syncuser@<hostname> "find $SLAVE_DIR -type f -printf '%T@\n' | sort -n | tail -1")
     if [ -z "$timestamp" ]; then
         log_message "Error retrieving timestamp from slave directory"
-        ssh -t -i $IDENTITY_FILE -p 47722 syncuser@echo.nuvana.io "find $SLAVE_DIR -type f -printf '%T@\n' | sort -n | tail -1" &>> $LOG_FILE
+        ssh -t -i $IDENTITY_FILE -p <port> syncuser@<hostname> "find $SLAVE_DIR -type f -printf '%T@\n' | sort -n | tail -1" &>> $LOG_FILE
     else
         log_message "Retrieved slave timestamp: $timestamp"
     fi
@@ -59,7 +59,7 @@ decide_sync_direction() {
 
     if [ -z "$slave_latest" ]; then
         log_message "Slave timestamp is empty, defaulting to master to slave sync"
-        rsync -avzur -e "ssh -i $IDENTITY_FILE -p 47722" --delete $MASTER_DIR syncuser@echo.nuvana.io:$SLAVE_DIR
+        rsync -avzur -e "ssh -i $IDENTITY_FILE -p <port>" --delete $MASTER_DIR syncuser@<hostname>:$SLAVE_DIR
         if [ $? -eq 0 ]; then
             log_message "Sync from master to slave completed successfully"
         else
@@ -67,7 +67,7 @@ decide_sync_direction() {
         fi
     elif (( $(echo "$slave_latest > $master_latest" | bc -l) )); then
         log_message "Slave has the latest files, syncing slave to master"
-        rsync -avzur -e "ssh -i $IDENTITY_FILE -p 47722" --delete syncuser@echo.nuvana.io:$SLAVE_DIR $MASTER_DIR
+        rsync -avzur -e "ssh -i $IDENTITY_FILE -p <port>" --delete syncuser@<hostname>:$SLAVE_DIR $MASTER_DIR
         if [ $? -eq 0 ]; then
             log_message "Sync from slave to master completed successfully"
         else
@@ -75,7 +75,7 @@ decide_sync_direction() {
         fi
     else
         log_message "Master has the latest files, syncing master to slave"
-        rsync -avzur -e "ssh -i $IDENTITY_FILE -p 47722" --delete $MASTER_DIR syncuser@echo.nuvana.io:$SLAVE_DIR
+        rsync -avzur -e "ssh -i $IDENTITY_FILE -p <port>" --delete $MASTER_DIR syncuser@<hostname>:$SLAVE_DIR
         if [ $? -eq 0 ]; then
             log_message "Sync from master to slave completed successfully"
         else
