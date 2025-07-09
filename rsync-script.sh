@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Synchronization with echo filesystem 
+# Synchronization with peer filesystem 
 MASTER_DIR="/var/dir/"
 SLAVE_DIR="/var/dir/"
 LOG_FILE="/var/log/rsync.log"
